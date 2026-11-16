@@ -314,6 +314,22 @@ public sealed partial class LibraryViewModel : ObservableObject
             }
         }
 
+        if (_services.Paths.IsManagedBookPath(book.FilePath)
+            && !await _services.Books.AnyOtherBookUsesFilePathAsync(book.FilePath, id))
+        {
+            try
+            {
+                if (File.Exists(book.FilePath))
+                {
+                    File.Delete(book.FilePath);
+                }
+            }
+            catch (Exception exception)
+            {
+                AppLog.Warn("删除书库副本失败", exception);
+            }
+        }
+
         if (!string.IsNullOrWhiteSpace(book.CoverPath)
             && !await _services.Books.AnyOtherBookUsesCoverAsync(book.CoverPath, id))
         {

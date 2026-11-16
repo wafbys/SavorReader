@@ -8,6 +8,7 @@ public sealed class AppPaths
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(dataRoot);
         DataRoot = Path.GetFullPath(dataRoot);
+        BooksDirectory = Path.Combine(DataRoot, "Books");
         CoversDirectory = Path.Combine(DataRoot, "covers");
         EpubCacheDirectory = Path.Combine(DataRoot, "cache", "epub");
         WebView2Directory = Path.Combine(DataRoot, "webview2");
@@ -15,6 +16,7 @@ public sealed class AppPaths
         DatabasePath = Path.Combine(DataRoot, "library.db");
 
         Directory.CreateDirectory(DataRoot);
+        Directory.CreateDirectory(BooksDirectory);
         Directory.CreateDirectory(CoversDirectory);
         Directory.CreateDirectory(EpubCacheDirectory);
         Directory.CreateDirectory(WebView2Directory);
@@ -24,6 +26,8 @@ public sealed class AppPaths
     public string DataRoot { get; }
 
     public string DatabasePath { get; }
+
+    public string BooksDirectory { get; }
 
     public string CoversDirectory { get; }
 
@@ -54,6 +58,20 @@ public sealed class AppPaths
         }
 
         return Path.Combine(EpubCacheDirectory, contentHash.ToLowerInvariant());
+    }
+
+    public bool IsManagedBookPath(string filePath)
+    {
+        if (string.IsNullOrWhiteSpace(filePath))
+        {
+            return false;
+        }
+
+        var fullPath = Path.GetFullPath(filePath);
+        var prefix = BooksDirectory.EndsWith(Path.DirectorySeparatorChar)
+            ? BooksDirectory
+            : BooksDirectory + Path.DirectorySeparatorChar;
+        return fullPath.StartsWith(prefix, StringComparison.OrdinalIgnoreCase);
     }
 
     public string ToRelativeCoverPath(string fileName)

@@ -7,7 +7,7 @@ namespace SavorReader.Core.Services;
 public sealed class BookRepository
 {
     private const string SelectColumns = """
-        Id, FilePath, Format, Title, Author, Publisher, Language, Description,
+        Id, FilePath, SourcePath, Format, Title, Author, Publisher, Language, Description,
         CoverPath, PageCount, FileSize, FileModifiedUtc, ContentHash, AddedAtUtc,
         LastOpenedAtUtc, Status, Progress, LocationJson
         """;
@@ -65,6 +65,31 @@ public sealed class BookRepository
             cancellationToken);
     }
 
+    public async Task<Book?> GetBySourcePathAsync(
+        string sourcePath,
+        CancellationToken cancellationToken = default)
+    {
+        await using var connection = await _database.OpenConnectionAsync(cancellationToken);
+        var normalized = Path.GetFullPath(sourcePath);
+        return await ReadSingleAsync(
+            connection,
+            "WHERE SourcePath = $path COLLATE NOCASE",
+            ("$path", normalized),
+            cancellationToken);
+    }
+
+    public async Task<Book?> GetByContentHashAsync(
+        string contentHash,
+        CancellationToken cancellationToken = default)
+    {
+        await using var connection = await _database.OpenConnectionAsync(cancellationToken);
+        return await ReadSingleAsync(
+            connection,
+            "WHERE ContentHash = $hash COLLATE NOCASE",
+            ("$hash", contentHash),
+            cancellationToken);
+    }
+
     public async Task<long> InsertAsync(Book book, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(book);
@@ -72,11 +97,11 @@ public sealed class BookRepository
         using var command = connection.CreateCommand();
         command.CommandText = """
             INSERT INTO Books (
-                FilePath, Format, Title, Author, Publisher, Language, Description,
+                FilePath, SourcePath, Format, Title, Author, Publisher, Language, Description,
                 CoverPath, PageCount, FileSize, FileModifiedUtc, ContentHash,
                 AddedAtUtc, LastOpenedAtUtc, Status, Progress, LocationJson)
             VALUES (
-                $path, $format, $title, $author, $publisher, $language, $description,
+                $path, $sourcePath, $format, $title, $author, $publisher, $language, $description,
                 $coverPath, $pageCount, $fileSize, $fileModified, $contentHash,
                 $added, $lastOpened, $status, $progress, $location)
             RETURNING Id;
@@ -95,6 +120,7 @@ public sealed class BookRepository
         command.CommandText = """
             UPDATE Books SET
                 FilePath = $path,
+                SourcePath = $sourcePath,
                 Format = $format,
                 Title = $title,
                 Author = $author,
@@ -294,6 +320,24 @@ public sealed class BookRepository
         return Convert.ToInt32(await command.ExecuteScalarAsync(cancellationToken), CultureInfo.InvariantCulture) != 0;
     }
 
+    public async Task<bool> AnyOtherBookUsesFilePathAsync(
+        string filePath,
+        long excludingBookId,
+        CancellationToken cancellationToken = default)
+    {
+        await using var connection = await _database.OpenConnectionAsync(cancellationToken);
+        using var command = connection.CreateCommand();
+        command.CommandText = """
+            SELECT EXISTS(
+                SELECT 1 FROM Books
+                WHERE FilePath = $filePath COLLATE NOCASE AND Id <> $id
+            );
+            """;
+        command.Parameters.AddWithValue("$filePath", filePath);
+        command.Parameters.AddWithValue("$id", excludingBookId);
+        return Convert.ToInt32(await command.ExecuteScalarAsync(cancellationToken), CultureInfo.InvariantCulture) != 0;
+    }
+
     public async Task<int> CountAsync(CancellationToken cancellationToken = default)
     {
         await using var connection = await _database.OpenConnectionAsync(cancellationToken);
@@ -348,27 +392,29 @@ public sealed class BookRepository
     {
         Id = reader.GetInt64(0),
         FilePath = reader.GetString(1),
-        Format = BookFormatExtensions.ParseStorageValue(reader.GetString(2)),
-        Title = reader.GetString(3),
-        Author = reader.IsDBNull(4) ? null : reader.GetString(4),
-        Publisher = reader.IsDBNull(5) ? null : reader.GetString(5),
-        Language = reader.IsDBNull(6) ? null : reader.GetString(6),
-        Description = reader.IsDBNull(7) ? null : reader.GetString(7),
-        CoverPath = reader.IsDBNull(8) ? null : reader.GetString(8),
-        PageCount = reader.IsDBNull(9) ? null : reader.GetInt32(9),
-        FileSize = reader.GetInt64(10),
-        FileModifiedUtc = ParseDate(reader.GetString(11)),
-        ContentHash = reader.IsDBNull(12) ? null : reader.GetString(12),
-        AddedAtUtc = ParseDate(reader.GetString(13)),
-        LastOpenedAtUtc = reader.IsDBNull(14) ? null : ParseDate(reader.GetString(14)),
-        Status = ReadingStatusExtensions.ParseStorageValue(reader.GetString(15)),
-        Progress = reader.GetDouble(16),
-        Location = reader.IsDBNull(17) ? null : ReadingLocationCodec.FromJson(reader.GetString(17)),
+        SourcePath = reader.IsDBNull(2) ? null : reader.GetString(2),
+        Format = BookFormatExtensions.ParseStorageValue(reader.GetString(3)),
+        Title = reader.GetString(4),
+        Author = reader.IsDBNull(5) ? null : reader.GetString(5),
+        Publisher = reader.IsDBNull(6) ? null : reader.GetString(6),
+        Language = reader.IsDBNull(7) ? null : reader.GetString(7),
+        Description = reader.IsDBNull(8) ? null : reader.GetString(8),
+        CoverPath = reader.IsDBNull(9) ? null : reader.GetString(9),
+        PageCount = reader.IsDBNull(10) ? null : reader.GetInt32(10),
+        FileSize = reader.GetInt64(11),
+        FileModifiedUtc = ParseDate(reader.GetString(12)),
+        ContentHash = reader.IsDBNull(13) ? null : reader.GetString(13),
+        AddedAtUtc = ParseDate(reader.GetString(14)),
+        LastOpenedAtUtc = reader.IsDBNull(15) ? null : ParseDate(reader.GetString(15)),
+        Status = ReadingStatusExtensions.ParseStorageValue(reader.GetString(16)),
+        Progress = reader.GetDouble(17),
+        Location = reader.IsDBNull(18) ? null : ReadingLocationCodec.FromJson(reader.GetString(18)),
     };
 
     private static void AddBookParameters(SqliteCommand command, Book book)
     {
         command.Parameters.AddWithValue("$path", Path.GetFullPath(book.FilePath));
+        command.Parameters.AddWithValue("$sourcePath", (object?)book.SourcePath ?? DBNull.Value);
         command.Parameters.AddWithValue("$format", book.Format.ToStorageValue());
         command.Parameters.AddWithValue("$title", book.Title);
         command.Parameters.AddWithValue("$author", (object?)book.Author ?? DBNull.Value);

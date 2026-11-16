@@ -172,7 +172,7 @@ public sealed partial class LibraryPage : Page
         {
             XamlRoot = XamlRoot,
             Title = "从书库移除",
-            Content = $"确定移除《{item.Title}》吗？\n\n只会删除书库记录和缓存，不会删除原始文件。",
+            Content = $"确定移除《{item.Title}》吗？\n\n只会删除书库记录、书库副本和缓存，不会删除原始文件。",
             PrimaryButtonText = "移除",
             CloseButtonText = "取消",
             DefaultButton = ContentDialogButton.Close,

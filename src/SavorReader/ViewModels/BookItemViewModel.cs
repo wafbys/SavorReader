@@ -25,7 +25,7 @@ public sealed class BookItemViewModel : ObservableObject
 
     public string AuthorText => string.IsNullOrWhiteSpace(_book.Author) ? "未知作者" : _book.Author;
 
-    public string FileName => Path.GetFileName(_book.FilePath);
+    public string FileName => Path.GetFileName(_book.SourcePath ?? _book.FilePath);
 
     public string FilePath => _book.FilePath;
 

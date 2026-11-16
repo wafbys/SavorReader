@@ -1,0 +1,190 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Page
+    x:Class="SavorReader.Views.AboutPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d"
+    Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+
+    <ScrollViewer Padding="24,18,24,24">
+        <StackPanel MaxWidth="900" HorizontalAlignment="Left" Spacing="14">
+            <TextBlock Style="{StaticResource TitleTextBlockStyle}" Text="关于" />
+
+            <Border
+                Padding="20"
+                Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                BorderThickness="1"
+                CornerRadius="10">
+                <Grid ColumnSpacing="18">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <Image
+                        Width="72"
+                        Height="72"
+                        VerticalAlignment="Top"
+                        Source="Assets/AppIcon.ico" />
+                    <StackPanel Grid.Column="1" Spacing="4">
+                        <TextBlock
+                            FontSize="28"
+                            FontWeight="SemiBold"
+                            Text="SavorReader" />
+                        <TextBlock
+                            FontSize="14"
+                            Opacity="0.7"
+                            Text="本地 EPUB/PDF 书库与阅读器" />
+                        <TextBlock
+                            x:Name="VersionText"
+                            FontSize="12"
+                            Opacity="0.55" />
+                        <TextBlock
+                            Margin="0,6,0,0"
+                            FontSize="12"
+                            Opacity="0.65"
+                            TextWrapping="Wrap"
+                            Text="为个人本地阅读而做：书库、EPUB 连续滚动、主题排版、PDF 基础查看，以及用系统应用打开 PDF。" />
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <Border
+                Padding="18"
+                Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                BorderThickness="1"
+                CornerRadius="10">
+                <StackPanel Spacing="10">
+                    <TextBlock FontSize="16" FontWeight="SemiBold" Text="运行环境" />
+                    <Grid ColumnSpacing="16" RowSpacing="8">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="132" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+
+                        <TextBlock FontSize="12" Opacity="0.6" Text=".NET" />
+                        <TextBlock
+                            x:Name="DotNetText"
+                            Grid.Column="1"
+                            FontSize="12"
+                            IsTextSelectionEnabled="True" />
+
+                        <TextBlock Grid.Row="1" FontSize="12" Opacity="0.6" Text="UI" />
+                        <TextBlock
+                            x:Name="WinUiText"
+                            Grid.Row="1"
+                            Grid.Column="1"
+                            FontSize="12"
+                            IsTextSelectionEnabled="True" />
+
+                        <TextBlock Grid.Row="2" FontSize="12" Opacity="0.6" Text="WebView2" />
+                        <TextBlock
+                            x:Name="WebView2Text"
+                            Grid.Row="2"
+                            Grid.Column="1"
+                            FontSize="12"
+                            IsTextSelectionEnabled="True" />
+
+                        <TextBlock Grid.Row="3" FontSize="12" Opacity="0.6" Text="系统" />
+                        <TextBlock
+                            x:Name="OperatingSystemText"
+                            Grid.Row="3"
+                            Grid.Column="1"
+                            FontSize="12"
+                            IsTextSelectionEnabled="True" />
+
+                        <TextBlock Grid.Row="4" FontSize="12" Opacity="0.6" Text="架构" />
+                        <TextBlock
+                            x:Name="ArchitectureText"
+                            Grid.Row="4"
+                            Grid.Column="1"
+                            FontSize="12"
+                            IsTextSelectionEnabled="True" />
+                    </Grid>
+                </StackPanel>
+            </Border>
+
+            <Border
+                Padding="18"
+                Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                BorderThickness="1"
+                CornerRadius="10">
+                <StackPanel Spacing="10">
+                    <TextBlock FontSize="16" FontWeight="SemiBold" Text="数据与隐私" />
+                    <TextBlock
+                        FontSize="12"
+                        Opacity="0.65"
+                        TextWrapping="Wrap"
+                        Text="所有数据都保存在本机执行文件旁的 Data 目录。导入的书籍会复制到 Data\Books，不联网同步，也不上传书籍内容。" />
+                    <TextBlock
+                        x:Name="DataPathText"
+                        FontFamily="Consolas"
+                        FontSize="12"
+                        IsTextSelectionEnabled="True"
+                        TextWrapping="Wrap" />
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <Button Click="OpenDataFolder_Click" Content="打开数据目录" />
+                        <Button Click="OpenLogs_Click" Content="查看日志" />
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+            <Border
+                Padding="18"
+                Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                BorderThickness="1"
+                CornerRadius="10">
+                <StackPanel Spacing="10">
+                    <TextBlock FontSize="16" FontWeight="SemiBold" Text="开源与许可" />
+                    <TextBlock
+                        FontSize="12"
+                        Opacity="0.65"
+                        TextWrapping="Wrap"
+                        Text="SavorReader 自有代码使用 MIT License。EPUB/PDF 解析、SQLite、MVVM 等第三方依赖均为开源许可证；WebView2 Runtime 是免费的 Windows 系统运行时。" />
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <Button Click="OpenLicense_Click" Content="MIT License" />
+                        <Button Click="OpenThirdPartyNotices_Click" Content="第三方声明" />
+                    </StackPanel>
+                    <TextBlock
+                        FontSize="12"
+                        Opacity="0.55"
+                        TextWrapping="Wrap"
+                        Text="主要依赖：VersOne.Epub（Unlicense）、PdfPig（Apache-2.0）、Microsoft.Data.Sqlite（MIT）、CommunityToolkit.Mvvm（MIT）。" />
+                </StackPanel>
+            </Border>
+
+            <Border
+                Padding="18"
+                Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                BorderThickness="1"
+                CornerRadius="10">
+                <StackPanel Spacing="8">
+                    <TextBlock FontSize="16" FontWeight="SemiBold" Text="范围说明" />
+                    <TextBlock
+                        FontSize="12"
+                        Opacity="0.65"
+                        TextWrapping="Wrap"
+                        Text="当前版本聚焦可重排 EPUB。固定版式 EPUB、DRM 加密文件不在支持范围内；PDF 使用 WebView2 原生查看器，暂不记录页码进度。" />
+                    <TextBlock
+                        FontSize="12"
+                        Opacity="0.5"
+                        TextWrapping="Wrap"
+                        Text="纯本地 · 无 MSIX · 无云同步" />
+                </StackPanel>
+            </Border>
+        </StackPanel>
+    </ScrollViewer>
+</Page>

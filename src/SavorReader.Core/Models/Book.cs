@@ -4,7 +4,11 @@ public sealed class Book
 {
     public long Id { get; set; }
 
+    /// <summary>Managed copy under the application data directory.</summary>
     public string FilePath { get; set; } = string.Empty;
+
+    /// <summary>Original file path at import time; kept for display and re-import detection.</summary>
+    public string? SourcePath { get; set; }
 
     public BookFormat Format { get; set; }
 

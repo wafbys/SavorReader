@@ -16,8 +16,12 @@ public sealed partial class SettingsPage : Page
     {
         base.OnNavigatedTo(e);
         DataPathText.Text = App.Services.Paths.DataRoot;
+        AboutVersionText.Text = $"SavorReader {AppInfo.Version} · 本地 EPUB/PDF 书库与阅读器";
         await RefreshCacheSizeAsync();
     }
+
+    private void OpenAbout_Click(object sender, RoutedEventArgs e) =>
+        Frame.Navigate(typeof(AboutPage));
 
     private async Task RefreshCacheSizeAsync()
     {

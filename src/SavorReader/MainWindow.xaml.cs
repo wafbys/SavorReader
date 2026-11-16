@@ -50,6 +50,7 @@ public sealed partial class MainWindow : Window
         {
             "library" => typeof(LibraryPage),
             "settings" => typeof(SettingsPage),
+            "about" => typeof(AboutPage),
             _ => null,
         };
 
@@ -81,6 +82,10 @@ public sealed partial class MainWindow : Window
             else if (e.SourcePageType == typeof(SettingsPage))
             {
                 NavView.SelectedItem = SettingsNavItem;
+            }
+            else if (e.SourcePageType == typeof(AboutPage))
+            {
+                NavView.SelectedItem = AboutNavItem;
             }
         }
         finally

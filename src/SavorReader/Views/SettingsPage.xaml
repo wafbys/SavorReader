@@ -23,7 +23,7 @@
                     <TextBlock
                         FontSize="12"
                         Opacity="0.65"
-                        Text="书库数据库、封面、EPUB 缓存和 WebView2 数据都保存在执行文件旁的 Data 目录。" />
+                        Text="书库数据库、书籍副本、封面、EPUB 缓存和 WebView2 数据都保存在执行文件旁的 Data 目录。" />
                     <TextBlock
                         x:Name="DataPathText"
                         FontFamily="Consolas"
@@ -79,18 +79,19 @@
                 BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
                 BorderThickness="1"
                 CornerRadius="10">
-                <StackPanel Spacing="8">
+                <StackPanel Spacing="10">
                     <TextBlock FontSize="16" FontWeight="SemiBold" Text="关于" />
                     <TextBlock
+                        x:Name="AboutVersionText"
                         FontSize="12"
                         Opacity="0.7"
-                        TextWrapping="Wrap"
-                        Text="SavorReader · 本地 EPUB/PDF 书库与阅读器。EPUB 使用 WebView2 渲染；PDF 使用 WebView2 内置查看器，并支持调用系统默认应用打开。" />
+                        TextWrapping="Wrap" />
                     <TextBlock
                         FontSize="12"
                         Opacity="0.55"
                         TextWrapping="Wrap"
-                        Text="纯本地运行，不联网同步。EPUB 聚焦可重排（reflowable）书籍；固定版式和 DRM 文件不在 MVP 支持范围内。" />
+                        Text="查看运行环境、数据目录、开源许可证和范围说明。" />
+                    <Button Click="OpenAbout_Click" Content="打开关于页" />
                 </StackPanel>
             </Border>
         </StackPanel>

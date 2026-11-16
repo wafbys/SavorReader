@@ -4,7 +4,7 @@ namespace SavorReader.Core.Services;
 
 public sealed class LibraryDatabase
 {
-    public const int SchemaVersion = 1;
+    public const int SchemaVersion = 2;
 
     public LibraryDatabase(string databasePath)
     {
@@ -53,6 +53,7 @@ public sealed class LibraryDatabase
                 CREATE TABLE IF NOT EXISTS Books (
                     Id INTEGER PRIMARY KEY AUTOINCREMENT,
                     FilePath TEXT NOT NULL COLLATE NOCASE UNIQUE,
+                    SourcePath TEXT NULL,
                     Format TEXT NOT NULL CHECK (Format IN ('epub', 'pdf')),
                     Title TEXT NOT NULL,
                     Author TEXT NULL,
@@ -105,12 +106,31 @@ public sealed class LibraryDatabase
                     ON Books(LastOpenedAtUtc DESC);
                 CREATE INDEX IF NOT EXISTS IX_Books_Status
                     ON Books(Status);
+                CREATE INDEX IF NOT EXISTS IX_Books_SourcePath
+                    ON Books(SourcePath COLLATE NOCASE);
+                CREATE INDEX IF NOT EXISTS IX_Books_ContentHash
+                    ON Books(ContentHash);
                 CREATE INDEX IF NOT EXISTS IX_BookTags_TagId
                     ON BookTags(TagId);
                 CREATE INDEX IF NOT EXISTS IX_Annotations_BookId
                     ON Annotations(BookId);
 
-                PRAGMA user_version=1;
+                PRAGMA user_version=2;
+                """, cancellationToken);
+
+            await transaction.CommitAsync(cancellationToken);
+        }
+        else if (version == 1)
+        {
+            await using var transaction = await connection.BeginTransactionAsync(cancellationToken);
+            await ExecuteAsync(connection, """
+                ALTER TABLE Books ADD COLUMN SourcePath TEXT NULL;
+                UPDATE Books SET SourcePath = FilePath WHERE SourcePath IS NULL;
+                CREATE INDEX IF NOT EXISTS IX_Books_SourcePath
+                    ON Books(SourcePath COLLATE NOCASE);
+                CREATE INDEX IF NOT EXISTS IX_Books_ContentHash
+                    ON Books(ContentHash);
+                PRAGMA user_version=2;
                 """, cancellationToken);
 
             await transaction.CommitAsync(cancellationToken);

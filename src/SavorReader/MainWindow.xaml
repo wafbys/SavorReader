@@ -46,6 +46,14 @@
                     Tag="settings" />
             </NavigationView.MenuItems>
 
+            <NavigationView.FooterMenuItems>
+                <NavigationViewItem
+                    x:Name="AboutNavItem"
+                    AutomationProperties.Name="关于"
+                    Content="关于"
+                    Tag="about" />
+            </NavigationView.FooterMenuItems>
+
             <Frame x:Name="ContentFrame" Navigated="ContentFrame_Navigated" />
         </NavigationView>
     </Grid>

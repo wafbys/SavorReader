@@ -71,6 +71,20 @@ public sealed class AppServices
         var pdfReader = new PdfMetadataReader();
         var epubCache = new EpubCacheService(paths);
 
+        try
+        {
+            var moved = await new LibraryMigrationService(paths, books)
+                .EnsureManagedBooksAsync(cancellationToken);
+            if (moved > 0)
+            {
+                AppLog.Info($"已将 {moved} 本旧书籍整理到 {paths.BooksDirectory}");
+            }
+        }
+        catch (Exception exception) when (exception is not OperationCanceledException)
+        {
+            AppLog.Warn("整理旧书籍副本失败，原路径仍可继续使用。", exception);
+        }
+
         return new AppServices(
             paths,
             database,

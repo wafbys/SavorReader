@@ -40,17 +40,20 @@ public sealed class BookImportService
                 return new ImportFailure(fullPath, "只支持 .epub 和 .pdf 文件。");
             }
 
-            var existing = await _books.GetByPathAsync(fullPath, cancellationToken);
-            if (existing is not null)
+            var existingBySource = await _books.GetBySourcePathAsync(fullPath, cancellationToken);
+            if (existingBySource is not null)
             {
-                return new ImportDuplicate(existing);
+                return new ImportDuplicate(existingBySource);
+            }
+
+            var contentHash = await FileHashService.ComputeSha256Async(fullPath, cancellationToken);
+            var existingByHash = await _books.GetByContentHashAsync(contentHash, cancellationToken);
+            if (existingByHash is not null)
+            {
+                return new ImportDuplicate(existingByHash);
             }
 
             var fileInfo = new FileInfo(fullPath);
-            var contentHash = format == BookFormat.Epub
-                ? await FileHashService.ComputeSha256Async(fullPath, cancellationToken)
-                : null;
-
             var metadata = await Task.Run(
                 () => format == BookFormat.Epub
                     ? _epubReader.Read(fullPath).Metadata
@@ -58,9 +61,16 @@ public sealed class BookImportService
                 cancellationToken);
 
             var coverPath = await SaveCoverAsync(metadata, contentHash, cancellationToken);
+            var managedPath = ManagedBookFiles.Allocate(
+                _paths.BooksDirectory,
+                Path.GetFileName(fullPath),
+                sourcePath: fullPath);
+            var copied = await EnsureManagedCopyAsync(fullPath, managedPath, cancellationToken);
+
             var book = new Book
             {
-                FilePath = fullPath,
+                FilePath = managedPath,
+                SourcePath = fullPath,
                 Format = format.Value,
                 Title = string.IsNullOrWhiteSpace(metadata.Title)
                     ? Path.GetFileNameWithoutExtension(fullPath)
@@ -79,7 +89,20 @@ public sealed class BookImportService
                 Progress = 0,
             };
 
-            await _books.InsertAsync(book, cancellationToken);
+            try
+            {
+                await _books.InsertAsync(book, cancellationToken);
+            }
+            catch
+            {
+                if (copied)
+                {
+                    TryDelete(managedPath);
+                }
+
+                throw;
+            }
+
             return new ImportSuccess(book);
         }
         catch (Exception exception)
@@ -134,12 +157,11 @@ public sealed class BookImportService
 
     private async Task<string?> SaveCoverAsync(
         BookMetadata metadata,
-        string? contentHash,
+        string contentHash,
         CancellationToken cancellationToken)
     {
         if (metadata.CoverBytes is not { Length: > 0 }
-            || string.IsNullOrWhiteSpace(metadata.CoverExtension)
-            || string.IsNullOrWhiteSpace(contentHash))
+            || string.IsNullOrWhiteSpace(metadata.CoverExtension))
         {
             return null;
         }
@@ -148,5 +170,49 @@ public sealed class BookImportService
         var destination = Path.Combine(_paths.CoversDirectory, fileName);
         await File.WriteAllBytesAsync(destination, metadata.CoverBytes, cancellationToken);
         return _paths.ToRelativeCoverPath(fileName);
+    }
+
+    internal static async Task<bool> EnsureManagedCopyAsync(
+        string sourcePath,
+        string managedPath,
+        CancellationToken cancellationToken)
+    {
+        if (File.Exists(managedPath))
+        {
+            return false;
+        }
+
+        Directory.CreateDirectory(Path.GetDirectoryName(managedPath)!);
+        await using var source = new FileStream(
+            sourcePath,
+            FileMode.Open,
+            FileAccess.Read,
+            FileShare.Read,
+            128 * 1024,
+            FileOptions.Asynchronous | FileOptions.SequentialScan);
+        await using var destination = new FileStream(
+            managedPath,
+            FileMode.CreateNew,
+            FileAccess.Write,
+            FileShare.None,
+            128 * 1024,
+            FileOptions.Asynchronous);
+        await source.CopyToAsync(destination, cancellationToken);
+        return true;
+    }
+
+    private static void TryDelete(string path)
+    {
+        try
+        {
+            if (File.Exists(path))
+            {
+                File.Delete(path);
+            }
+        }
+        catch
+        {
+            // Best effort rollback; the import has already failed.
+        }
     }
 }

@@ -32,6 +32,27 @@ public sealed class LibraryDatabaseTests
     }
 
     [Fact]
+    public async Task Initialize_AddsManagedSourcePathColumn()
+    {
+        using var temp = new TempDirectory();
+        var database = new LibraryDatabase(Path.Combine(temp.Path, "library.db"));
+        await database.InitializeAsync();
+
+        await using var connection = await database.OpenConnectionAsync();
+        using var command = connection.CreateCommand();
+        command.CommandText = "PRAGMA table_info(Books);";
+        using var reader = await command.ExecuteReaderAsync();
+        var columns = new List<string>();
+        while (await reader.ReadAsync())
+        {
+            columns.Add(reader.GetString(1));
+        }
+
+        Assert.Contains("FilePath", columns);
+        Assert.Contains("SourcePath", columns);
+    }
+
+    [Fact]
     public async Task BookRepository_RoundTripsBookTagsAndProgress()
     {
         using var temp = new TempDirectory();
