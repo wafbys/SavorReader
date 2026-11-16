@@ -21,6 +21,16 @@
 
 项目不生成 MSIX，也不需要 Visual Studio；全部操作通过命令行完成。
 
+## 版本
+
+版本号遵循 SemVer，唯一来源是 `src\SavorReader\SavorReader.csproj` 的 `VersionPrefix`：
+
+- 新增功能：升 minor，例如 `1.1.0` → `1.2.0`
+- 修复：升 patch，例如 `1.1.0` → `1.1.1`
+- 不兼容改动：升 major
+
+版本会显示在窗口标题和关于页；每次版本变更同步更新 `CHANGELOG.md`，再运行 `run-release.ps1`。
+
 ## 构建、测试、运行
 
 ```powershell
@@ -38,7 +48,7 @@ Release 构建并部署到固定执行目录：
 窗口标题会显示版本、`Debug`/`Release` 和 Git 短哈希，例如：
 
 ```text
-SavorReader v1.0.0 · Release · 4a98165
+SavorReader v1.1.0 · Release · 3a83ebb
 ```
 
 脚本会：
@@ -123,6 +133,7 @@ SavorReader v1.0.0 · Release · 4a98165
 - 设置页查看数据目录、日志和运行空间
 - “瘦身”扫描并清理 EPUB 解压缓存、未引用的书籍副本/封面和日志，显示可释放空间；不会删除当前书库正在使用的书籍和封面
 - WebView2 浏览器缓存标记为下次启动清理，避免删除正在被浏览器进程占用的文件
+- 左侧导航栏记住展开/收起状态，重启后恢复
 - 导航底部“关于”页显示版本、.NET/WinUI/WebView2 运行环境、系统架构和数据路径
 - 关于页可直接打开 `LICENSE` 与 `THIRD-PARTY-NOTICES.md`，并说明当前支持范围
 
