@@ -37,6 +37,8 @@ public sealed class AppPaths
 
     public string LogsDirectory { get; }
 
+    public string DeferredWebViewCleanupMarker => Path.Combine(DataRoot, ".slim-webview2");
+
     /// <summary>
     /// Data lives next to the executable by default. Set SAVORREADER_DATA_DIR to override,
     /// which is also what the test projects use.

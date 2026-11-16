@@ -44,16 +44,35 @@
                 BorderThickness="1"
                 CornerRadius="10">
                 <StackPanel Spacing="10">
-                    <TextBlock FontSize="16" FontWeight="SemiBold" Text="EPUB 缓存" />
+                    <TextBlock FontSize="16" FontWeight="SemiBold" Text="瘦身" />
                     <TextBlock
                         FontSize="12"
                         Opacity="0.65"
-                        Text="缓存可以随时删除；下次打开 EPUB 时会重新解压。原始书籍文件不会被删除。" />
+                        TextWrapping="Wrap"
+                        Text="清理 EPUB 解压缓存、未引用的书籍副本/封面和日志。书库中正在使用的书籍和封面不会被删除；WebView2 浏览器缓存会在下次启动时清理。" />
                     <TextBlock
-                        x:Name="CacheSizeText"
+                        x:Name="SlimmingSummaryText"
                         FontSize="12"
-                        Opacity="0.75" />
-                    <Button Click="ClearCache_Click" Content="清理 EPUB 缓存" />
+                        LineHeight="19"
+                        Opacity="0.75"
+                        TextWrapping="Wrap" />
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <Button
+                            x:Name="SlimmingScanButton"
+                            Click="RefreshSlimming_Click"
+                            Content="重新扫描" />
+                        <Button
+                            x:Name="SlimmingCleanButton"
+                            Click="CleanSlimming_Click"
+                            Content="立即瘦身"
+                            IsEnabled="False"
+                            Style="{StaticResource AccentButtonStyle}" />
+                        <ProgressRing
+                            x:Name="SlimmingProgress"
+                            Width="20"
+                            Height="20"
+                            IsActive="False" />
+                    </StackPanel>
                 </StackPanel>
             </Border>
 

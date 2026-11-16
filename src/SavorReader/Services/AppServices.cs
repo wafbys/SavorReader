@@ -15,6 +15,7 @@ public sealed class AppServices
         ReadingProgressService progress,
         PdfCoverService pdfCovers,
         EpubReaderAssets epubReaderAssets,
+        LibrarySlimmingService slimming,
         WebView2EnvironmentProvider webView2,
         ShellService shell,
         FilePickerService pickers)
@@ -29,6 +30,7 @@ public sealed class AppServices
         Progress = progress;
         PdfCovers = pdfCovers;
         EpubReaderAssets = epubReaderAssets;
+        Slimming = slimming;
         WebView2 = webView2;
         Shell = shell;
         Pickers = pickers;
@@ -53,6 +55,8 @@ public sealed class AppServices
     public PdfCoverService PdfCovers { get; }
 
     public EpubReaderAssets EpubReaderAssets { get; }
+
+    public LibrarySlimmingService Slimming { get; }
 
     public WebView2EnvironmentProvider WebView2 { get; }
 
@@ -85,6 +89,19 @@ public sealed class AppServices
             AppLog.Warn("整理旧书籍副本失败，原路径仍可继续使用。", exception);
         }
 
+        var slimming = new LibrarySlimmingService(paths, books);
+        try
+        {
+            if (await slimming.ApplyDeferredWebViewCleanupAsync(cancellationToken))
+            {
+                AppLog.Info("已按计划清理 WebView2 浏览器缓存。");
+            }
+        }
+        catch (Exception exception) when (exception is not OperationCanceledException)
+        {
+            AppLog.Warn("清理 WebView2 浏览器缓存失败，将在下次启动重试。", exception);
+        }
+
         return new AppServices(
             paths,
             database,
@@ -96,6 +113,7 @@ public sealed class AppServices
             new ReadingProgressService(books),
             new PdfCoverService(paths, books),
             new EpubReaderAssets(paths, epubCache),
+            slimming,
             new WebView2EnvironmentProvider(paths),
             new ShellService(),
             new FilePickerService());
