@@ -1,0 +1,89 @@
+using SavorReader.Core.Services;
+
+namespace SavorReader.Services;
+
+public sealed class AppServices
+{
+    private AppServices(
+        AppPaths paths,
+        LibraryDatabase database,
+        BookRepository books,
+        SettingsService settings,
+        EpubBookReader epubReader,
+        EpubCacheService epubCache,
+        BookImportService imports,
+        ReadingProgressService progress,
+        PdfCoverService pdfCovers,
+        EpubReaderAssets epubReaderAssets,
+        WebView2EnvironmentProvider webView2,
+        ShellService shell,
+        FilePickerService pickers)
+    {
+        Paths = paths;
+        Database = database;
+        Books = books;
+        Settings = settings;
+        EpubReader = epubReader;
+        EpubCache = epubCache;
+        Imports = imports;
+        Progress = progress;
+        PdfCovers = pdfCovers;
+        EpubReaderAssets = epubReaderAssets;
+        WebView2 = webView2;
+        Shell = shell;
+        Pickers = pickers;
+    }
+
+    public AppPaths Paths { get; }
+
+    public LibraryDatabase Database { get; }
+
+    public BookRepository Books { get; }
+
+    public SettingsService Settings { get; }
+
+    public EpubBookReader EpubReader { get; }
+
+    public EpubCacheService EpubCache { get; }
+
+    public BookImportService Imports { get; }
+
+    public ReadingProgressService Progress { get; }
+
+    public PdfCoverService PdfCovers { get; }
+
+    public EpubReaderAssets EpubReaderAssets { get; }
+
+    public WebView2EnvironmentProvider WebView2 { get; }
+
+    public ShellService Shell { get; }
+
+    public FilePickerService Pickers { get; }
+
+    public static async Task<AppServices> CreateAsync(CancellationToken cancellationToken = default)
+    {
+        var paths = AppPaths.CreateDefault();
+        var database = new LibraryDatabase(paths.DatabasePath);
+        await database.InitializeAsync(cancellationToken);
+
+        var books = new BookRepository(database);
+        var epubReader = new EpubBookReader();
+        var pdfReader = new PdfMetadataReader();
+        var epubCache = new EpubCacheService(paths);
+
+        return new AppServices(
+            paths,
+            database,
+            books,
+            new SettingsService(database),
+            epubReader,
+            epubCache,
+            new BookImportService(paths, books, epubReader, pdfReader),
+            new ReadingProgressService(books),
+            new PdfCoverService(paths, books),
+            new EpubReaderAssets(paths, epubCache),
+            new WebView2EnvironmentProvider(paths),
+            new ShellService(),
+            new FilePickerService());
+    }
+}

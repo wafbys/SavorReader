@@ -1,0 +1,9 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/SavorReader.Core/SavorReader.Core.csproj" />
+    <Project Path="src/SavorReader/SavorReader.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/SavorReader.Core.Tests/SavorReader.Core.Tests.csproj" />
+  </Folder>
+</Solution>

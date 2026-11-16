@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Page
+    x:Class="SavorReader.Views.SettingsPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d"
+    Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+
+    <ScrollViewer Padding="24,18,24,24">
+        <StackPanel MaxWidth="900" HorizontalAlignment="Left" Spacing="14">
+            <TextBlock Style="{StaticResource TitleTextBlockStyle}" Text="设置" />
+
+            <Border
+                Padding="18"
+                Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                BorderThickness="1"
+                CornerRadius="10">
+                <StackPanel Spacing="10">
+                    <TextBlock FontSize="16" FontWeight="SemiBold" Text="数据目录" />
+                    <TextBlock
+                        FontSize="12"
+                        Opacity="0.65"
+                        Text="书库数据库、封面、EPUB 缓存和 WebView2 数据都保存在执行文件旁的 Data 目录。" />
+                    <TextBlock
+                        x:Name="DataPathText"
+                        FontFamily="Consolas"
+                        FontSize="12"
+                        IsTextSelectionEnabled="True"
+                        TextWrapping="Wrap" />
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <Button Click="OpenDataFolder_Click" Content="打开数据目录" />
+                        <Button Click="OpenLogs_Click" Content="查看日志" />
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+            <Border
+                Padding="18"
+                Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                BorderThickness="1"
+                CornerRadius="10">
+                <StackPanel Spacing="10">
+                    <TextBlock FontSize="16" FontWeight="SemiBold" Text="EPUB 缓存" />
+                    <TextBlock
+                        FontSize="12"
+                        Opacity="0.65"
+                        Text="缓存可以随时删除；下次打开 EPUB 时会重新解压。原始书籍文件不会被删除。" />
+                    <TextBlock
+                        x:Name="CacheSizeText"
+                        FontSize="12"
+                        Opacity="0.75" />
+                    <Button Click="ClearCache_Click" Content="清理 EPUB 缓存" />
+                </StackPanel>
+            </Border>
+
+            <Border
+                Padding="18"
+                Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                BorderThickness="1"
+                CornerRadius="10">
+                <StackPanel Spacing="8">
+                    <TextBlock FontSize="16" FontWeight="SemiBold" Text="阅读设置" />
+                    <TextBlock
+                        FontSize="12"
+                        Opacity="0.65"
+                        TextWrapping="Wrap"
+                        Text="字体、字号、行距、边距和日间/夜间主题在 EPUB 阅读器的“阅读设置”中调整，并全局保存。" />
+                </StackPanel>
+            </Border>
+
+            <Border
+                Padding="18"
+                Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                BorderThickness="1"
+                CornerRadius="10">
+                <StackPanel Spacing="8">
+                    <TextBlock FontSize="16" FontWeight="SemiBold" Text="关于" />
+                    <TextBlock
+                        FontSize="12"
+                        Opacity="0.7"
+                        TextWrapping="Wrap"
+                        Text="SavorReader · 本地 EPUB/PDF 书库与阅读器。EPUB 使用 WebView2 渲染；PDF 使用 WebView2 内置查看器，并支持调用系统默认应用打开。" />
+                    <TextBlock
+                        FontSize="12"
+                        Opacity="0.55"
+                        TextWrapping="Wrap"
+                        Text="纯本地运行，不联网同步。EPUB 聚焦可重排（reflowable）书籍；固定版式和 DRM 文件不在 MVP 支持范围内。" />
+                </StackPanel>
+            </Border>
+        </StackPanel>
+    </ScrollViewer>
+</Page>

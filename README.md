@@ -1,0 +1,135 @@
+# SavorReader
+
+本地个人使用的 EPUB/PDF 书库与阅读器。WinUI 3 + .NET 11 + C# 15，纯本地运行，不打包、不发布、不生成 MSIX。
+
+## 技术栈
+
+- **应用项目**：`net11.0-windows10.0.26100.0`，WinUI 3（Windows App SDK 2.6.5），unpackaged，`WindowsPackageType=None`
+- **核心项目**：`net11.0`，C# 15
+- **UI**：WinUI 3 / XAML；自定义标题栏 + Mica
+- **EPUB**：解压到本地缓存，WebView2 虚拟主机，spine 章节 iframe 连续滚动
+- **PDF**：WebView2 内置 PDF 查看器；`Windows.Data.Pdf` 生成首页封面
+- **持久化**：SQLite（`Microsoft.Data.Sqlite`）
+- **格式解析**：`VersOne.Epub`、`PdfPig`
+
+## 环境要求
+
+- Windows 11 x64（本机为 Windows 11 26300）
+- .NET SDK 11.0.100（`global.json` 已固定）
+- Windows App Runtime 2.6.5（本机已安装）
+- WebView2 Runtime（本机已安装 157.x）
+
+项目不生成 MSIX，也不需要 Visual Studio；全部操作通过命令行完成。
+
+## 构建、测试、运行
+
+```powershell
+dotnet build .\SavorReader.slnx
+dotnet test .\tests\SavorReader.Core.Tests\SavorReader.Core.Tests.csproj
+dotnet run --project .\src\SavorReader\SavorReader.csproj
+```
+
+Release 构建并部署到固定执行目录：
+
+```powershell
+.\run-release.ps1
+```
+
+脚本会：
+
+1. `dotnet build -c Release`
+2. 把 Release 输出复制到 `C:\Users\YF\App\SavorReader`
+3. 保留该目录下已有的 `Data`
+4. 启动 `C:\Users\YF\App\SavorReader\SavorReader.exe`
+
+只构建/部署、不启动：
+
+```powershell
+.\run-release.ps1 -NoLaunch
+```
+
+`run-release.bat` 是同一脚本的批处理入口。
+
+## 数据目录
+
+数据目录固定在**执行文件旁的 `Data` 目录**：
+
+```text
+<exe目录>\Data\
+├─ library.db          SQLite 书库
+├─ library.db-wal      SQLite WAL
+├─ covers\             封面缓存
+├─ cache\epub\         EPUB 解压缓存
+├─ webview2\           WebView2 用户数据
+└─ logs\app.log        应用日志
+```
+
+- Release 运行：`C:\Users\YF\App\SavorReader\Data`
+- `dotnet run`：`src\SavorReader\bin\Debug\net11.0-windows10.0.26100.0\win-x64\Data`
+- 测试/诊断可用环境变量 `SAVORREADER_DATA_DIR` 覆盖数据根目录。
+
+书籍文件默认**引用原路径，不复制**。移走原文件后，书库记录仍在，但打开时会提示文件不存在。
+
+## 功能
+
+### 书库
+
+- 导入单个/多个 EPUB、PDF；递归扫描文件夹
+- 提取标题、作者、出版社、语言、简介、页数、封面
+- 网格/列表视图、搜索、状态筛选、标签筛选、排序
+- 标签新增/移除
+- 阅读状态：未读 / 阅读中 / 已读
+- 阅读进度与上次位置
+- PDF 封面首页渲染；缺失封面使用占位
+- 从书库移除记录（不删除原文件）
+- 在资源管理器中定位
+
+### EPUB 阅读器
+
+- WebView2 虚拟主机加载本地解压内容
+- spine 章节 iframe 自动测高，连续滚动
+- 目录（EPUB3 nav / EPUB2 NCX 由 VersOne 解析）
+- 日间/夜间主题
+- 字体、字号、行距、边距
+- 进度保存与恢复
+- 选中文本桥接，为后续高亮/笔记预留 `Annotations` 表与消息入口
+- 书籍脚本在 iframe sandbox 中禁用
+
+### PDF
+
+- WebView2 原生 PDF 查看器（页码、缩放、旋转）
+- 从书库/阅读页调用系统默认应用打开
+- 首页封面由 `Windows.Data.Pdf` 渲染
+- 进度按“打开时间 + 阅读状态”记录；原生查看器没有公开的当前页码 API，因此 MVP 不记录 PDF 页码进度
+
+## 项目结构
+
+```text
+src/
+  SavorReader.Core/       net11.0；模型、SQLite、EPUB/PDF 解析、导入、进度
+  SavorReader/            net11.0-windows10.0.26100.0；WinUI 3、WebView2、视图
+tests/
+  SavorReader.Core.Tests/ xUnit；数据库、解析、缓存、导入、进度测试
+```
+
+## 设计要点
+
+- C# 15 `closed` 层级用于 `ReadingLocation`（EPUB 位置 / PDF 页码）。
+- C# 15 `union` 用于 `ImportOutcome`（成功 / 重复 / 失败），调用端做穷尽 switch。
+- EPUB 解压缓存按文件 SHA-256 命名；解压前检查 Zip Slip、条目数和总大小。
+- 封面路径存相对数据目录的路径；数据目录迁移时更稳。
+- SQLite 使用 WAL、外键、`user_version` 迁移。
+- WebView2 的 EPUB 内容与阅读器 shell 位于同一虚拟主机，便于父页面注入样式和读取 iframe DOM。
+- PDF 映射其所在目录；只导航到指定 PDF。
+
+## 已知限制
+
+- 固定版式 EPUB（fixed layout）、DRM 加密 EPUB/PDF 不在 MVP 支持范围内，会显示错误。
+- PDF 页码进度不记录（见上）。
+- EPUB 极端复杂排版可能被阅读器的字体/边距覆盖影响；优先保证可重排书籍。
+- 不含云同步、在线元数据抓取、高亮/笔记 UI。
+- 依赖 WebView2 Runtime；缺少时阅读器会显示错误。
+
+## 许可证
+
+自有代码默认 MIT（见 `LICENSE`）。第三方依赖和运行时说明见 `THIRD-PARTY-NOTICES.md`。

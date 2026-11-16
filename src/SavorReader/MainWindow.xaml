@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Window
+    x:Class="SavorReader.MainWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    Title="SavorReader"
+    mc:Ignorable="d">
+    <Window.SystemBackdrop>
+        <MicaBackdrop />
+    </Window.SystemBackdrop>
+
+    <Grid Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <TitleBar x:Name="AppTitleBar" Title="SavorReader">
+            <TitleBar.IconSource>
+                <ImageIconSource ImageSource="Assets/AppIcon.ico" />
+            </TitleBar.IconSource>
+        </TitleBar>
+
+        <NavigationView
+            x:Name="NavView"
+            Grid.Row="1"
+            Background="{ThemeResource ApplicationPageBackgroundThemeBrush}"
+            IsBackButtonVisible="Collapsed"
+            IsSettingsVisible="False"
+            OpenPaneLength="220"
+            PaneDisplayMode="Left"
+            SelectionChanged="NavView_SelectionChanged"
+            Loaded="NavView_Loaded">
+            <NavigationView.MenuItems>
+                <NavigationViewItem
+                    x:Name="LibraryNavItem"
+                    AutomationProperties.Name="书库"
+                    Content="书库"
+                    Tag="library" />
+                <NavigationViewItem
+                    x:Name="SettingsNavItem"
+                    AutomationProperties.Name="设置"
+                    Content="设置"
+                    Tag="settings" />
+            </NavigationView.MenuItems>
+
+            <Frame x:Name="ContentFrame" Navigated="ContentFrame_Navigated" />
+        </NavigationView>
+    </Grid>
+</Window>

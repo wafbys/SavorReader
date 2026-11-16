@@ -1,0 +1,23 @@
+# Build output
+bin/
+obj/
+artifacts/
+TestResults/
+*.nupkg
+*.snupkg
+
+# IDE / user files
+.vs/
+.vscode/
+*.user
+*.suo
+*.DotSettings.user
+
+# Runtime data (next to debug/release executable; not source)
+Data/
+*.log
+
+# OS files
+Thumbs.db
+desktop.ini
+.DS_Store
