@@ -15,7 +15,7 @@ public sealed partial class AboutPage : Page
     protected override void OnNavigatedTo(NavigationEventArgs e)
     {
         base.OnNavigatedTo(e);
-        VersionText.Text = $"版本 {AppInfo.Version}";
+        VersionText.Text = $"版本 {AppInfo.DisplayVersion}";
         DotNetText.Text = AppInfo.DotNetVersion;
         WinUiText.Text = AppInfo.WindowsAppSdkVersion;
         WebView2Text.Text = AppInfo.WebView2Version;

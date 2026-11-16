@@ -7,6 +7,7 @@ namespace SavorReader.Services;
 public static class AppInfo
 {
     private static readonly Lazy<string> WebView2VersionValue = new(GetWebView2Version);
+    private static readonly Lazy<string> GitShortHashValue = new(GetGitShortHash);
 
     public static string Version
     {
@@ -18,6 +19,26 @@ public static class AppInfo
     }
 
     public static string DotNetVersion => RuntimeInformation.FrameworkDescription;
+
+    public static string BuildConfiguration
+    {
+        get
+        {
+#if DEBUG
+            return "Debug";
+#else
+            return "Release";
+#endif
+        }
+    }
+
+    public static string GitShortHash => GitShortHashValue.Value;
+
+    public static string WindowTitle =>
+        $"SavorReader v{Version} · {BuildConfiguration} · {GitShortHash}";
+
+    public static string DisplayVersion =>
+        $"{Version} · {BuildConfiguration} · {GitShortHash}";
 
     public static string WindowsAppSdkVersion => "WinUI 3 / Windows App SDK 2.6.5";
 
@@ -49,5 +70,28 @@ public static class AppInfo
         {
             return "未检测到 WebView2 Runtime";
         }
+    }
+
+    private static string GetGitShortHash()
+    {
+        var informationalVersion = Assembly
+            .GetExecutingAssembly()
+            .GetCustomAttribute<AssemblyInformationalVersionAttribute>()
+            ?.InformationalVersion;
+
+        if (string.IsNullOrWhiteSpace(informationalVersion))
+        {
+            return "nogit";
+        }
+
+        var separator = informationalVersion.LastIndexOf('+');
+        if (separator < 0 || separator == informationalVersion.Length - 1)
+        {
+            return "nogit";
+        }
+
+        var revision = informationalVersion[(separator + 1)..];
+        var hash = new string(revision.TakeWhile(char.IsAsciiHexDigit).ToArray());
+        return hash.Length >= 7 ? hash[..7] : "nogit";
     }
 }

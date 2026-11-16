@@ -16,7 +16,7 @@ public sealed partial class SettingsPage : Page
     {
         base.OnNavigatedTo(e);
         DataPathText.Text = App.Services.Paths.DataRoot;
-        AboutVersionText.Text = $"SavorReader {AppInfo.Version} · 本地 EPUB/PDF 书库与阅读器";
+        AboutVersionText.Text = $"SavorReader {AppInfo.DisplayVersion} · 本地 EPUB/PDF 书库与阅读器";
         await RefreshCacheSizeAsync();
     }
 

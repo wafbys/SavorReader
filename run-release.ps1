@@ -19,7 +19,7 @@ if ($running) {
 }
 
 if (-not $NoBuild) {
-    & dotnet build $project -c Release --nologo
+    & dotnet build $project -c Release --nologo --no-incremental
     if ($LASTEXITCODE -ne 0) {
         throw "Release 构建失败，退出码 $LASTEXITCODE。"
     }

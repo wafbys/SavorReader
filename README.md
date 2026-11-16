@@ -35,9 +35,15 @@ Release 构建并部署到固定执行目录：
 .\run-release.ps1
 ```
 
+窗口标题会显示版本、`Debug`/`Release` 和 Git 短哈希，例如：
+
+```text
+SavorReader v1.0.0 · Release · 4a98165
+```
+
 脚本会：
 
-1. `dotnet build -c Release`
+1. `dotnet build -c Release --no-incremental`（强制重建，确保短哈希刷新）
 2. 把 Release 输出复制到 `C:\Users\YF\App\SavorReader`
 3. 保留该目录下已有的 `Data`
 4. 启动 `C:\Users\YF\App\SavorReader\SavorReader.exe`
@@ -108,6 +114,10 @@ Release 构建并部署到固定执行目录：
 - 设置页查看数据目录、日志和 EPUB 缓存大小；可清理缓存、打开数据目录
 - 导航底部“关于”页显示版本、.NET/WinUI/WebView2 运行环境、系统架构和数据路径
 - 关于页可直接打开 `LICENSE` 与 `THIRD-PARTY-NOTICES.md`，并说明当前支持范围
+
+## 应用图标
+
+图标采用“奶油纸底 + 深墨绿书本 + 陶土色书签”：暖色纸感对应阅读与 Savor，书本轮廓保证 16px 任务栏尺寸下仍可辨认。`Assets\AppIcon.ico` 内含 16、24、32、48、64、128、256 多个尺寸，同时用于 exe、窗口标题栏、任务栏和关于页。
 
 ## 项目结构
 

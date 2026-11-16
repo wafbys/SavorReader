@@ -15,6 +15,9 @@ public sealed partial class MainWindow : Window
     public MainWindow()
     {
         InitializeComponent();
+        var windowTitle = AppInfo.WindowTitle;
+        Title = windowTitle;
+        AppTitleBar.Title = windowTitle;
         ExtendsContentIntoTitleBar = true;
         SetTitleBar(AppTitleBar);
         AppWindow.SetIcon("Assets/AppIcon.ico");
