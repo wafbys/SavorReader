@@ -1,7 +1,8 @@
 [CmdletBinding()]
 param(
     [switch]$NoBuild,
-    [switch]$NoLaunch
+    [switch]$NoLaunch,
+    [switch]$NoStartMenuShortcut
 )
 
 $ErrorActionPreference = 'Stop'
@@ -49,6 +50,27 @@ if (-not (Test-Path -LiteralPath $exe)) {
 
 Write-Host "已部署到 $destination"
 Write-Host "数据目录：$(Join-Path $destination 'Data')"
+
+if (-not $NoStartMenuShortcut) {
+    try {
+        $startMenuPrograms = Join-Path ([Environment]::GetFolderPath([Environment+SpecialFolder]::StartMenu)) 'Programs'
+        New-Item -ItemType Directory -Force -Path $startMenuPrograms | Out-Null
+        $shortcutPath = Join-Path $startMenuPrograms 'SavorReader.lnk'
+        $wshShell = New-Object -ComObject WScript.Shell
+        $shortcut = $wshShell.CreateShortcut($shortcutPath)
+        $shortcut.TargetPath = $exe
+        $shortcut.WorkingDirectory = $destination
+        $shortcut.IconLocation = "$exe,0"
+        $shortcut.Description = 'SavorReader 本地 EPUB/PDF 书库与阅读器'
+        $shortcut.Save()
+        [void][Runtime.InteropServices.Marshal]::ReleaseComObject($shortcut)
+        [void][Runtime.InteropServices.Marshal]::ReleaseComObject($wshShell)
+        Write-Host "开始菜单快捷方式：$shortcutPath"
+    }
+    catch {
+        Write-Warning "开始菜单快捷方式创建失败：$($_.Exception.Message)"
+    }
+}
 
 if (-not $NoLaunch) {
     Start-Process -FilePath $exe -WorkingDirectory $destination

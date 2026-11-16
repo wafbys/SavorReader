@@ -46,12 +46,19 @@ SavorReader v1.0.0 · Release · 4a98165
 1. `dotnet build -c Release --no-incremental`（强制重建，确保短哈希刷新）
 2. 把 Release 输出复制到 `C:\Users\YF\App\SavorReader`
 3. 保留该目录下已有的 `Data`
-4. 启动 `C:\Users\YF\App\SavorReader\SavorReader.exe`
+4. 在 `%APPDATA%\Microsoft\Windows\Start Menu\Programs\SavorReader.lnk` 创建/更新开始菜单快捷方式
+5. 启动 `C:\Users\YF\App\SavorReader\SavorReader.exe`
 
 只构建/部署、不启动：
 
 ```powershell
 .\run-release.ps1 -NoLaunch
+```
+
+不创建开始菜单快捷方式：
+
+```powershell
+.\run-release.ps1 -NoStartMenuShortcut
 ```
 
 `run-release.bat` 是同一脚本的批处理入口。
