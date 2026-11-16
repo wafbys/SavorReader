@@ -53,4 +53,19 @@ public sealed class SettingsServiceTests
         await settings.SetLibraryViewModeAsync("list");
         Assert.Equal("list", await settings.GetLibraryViewModeAsync());
     }
+
+    [Fact]
+    public async Task NavigationPaneState_RoundTripsAndDefaultsOpen()
+    {
+        using var temp = new TempDirectory();
+        var database = new LibraryDatabase(Path.Combine(temp.Path, "library.db"));
+        await database.InitializeAsync();
+        var settings = new SettingsService(database);
+
+        Assert.True(await settings.GetNavigationPaneOpenAsync());
+        await settings.SetNavigationPaneOpenAsync(false);
+        Assert.False(await settings.GetNavigationPaneOpenAsync());
+        await settings.SetNavigationPaneOpenAsync(true);
+        Assert.True(await settings.GetNavigationPaneOpenAsync());
+    }
 }

@@ -59,6 +59,15 @@ public sealed class SettingsService
     public Task SetLibraryViewModeAsync(string mode, CancellationToken cancellationToken = default) =>
         SetValueAsync("library.view", string.Equals(mode, "list", StringComparison.OrdinalIgnoreCase) ? "list" : "grid", cancellationToken);
 
+    public async Task<bool> GetNavigationPaneOpenAsync(CancellationToken cancellationToken = default)
+    {
+        var value = await GetValueAsync("ui.navigationPaneOpen", cancellationToken);
+        return !string.Equals(value, "false", StringComparison.OrdinalIgnoreCase);
+    }
+
+    public Task SetNavigationPaneOpenAsync(bool isOpen, CancellationToken cancellationToken = default) =>
+        SetValueAsync("ui.navigationPaneOpen", isOpen ? "true" : "false", cancellationToken);
+
     public async Task<string?> GetValueAsync(string key, CancellationToken cancellationToken = default)
     {
         await using var connection = await _database.OpenConnectionAsync(cancellationToken);
