@@ -13,10 +13,13 @@ public sealed class BookRepository
         """;
 
     private readonly LibraryDatabase _database;
+    private readonly string _dataRoot;
 
     public BookRepository(LibraryDatabase database)
     {
         _database = database;
+        _dataRoot = Path.GetDirectoryName(database.DatabasePath)
+            ?? throw new InvalidOperationException("数据库路径缺少数据目录。");
     }
 
     public async Task<IReadOnlyList<Book>> GetAllAsync(CancellationToken cancellationToken = default)
@@ -57,11 +60,10 @@ public sealed class BookRepository
     public async Task<Book?> GetByPathAsync(string filePath, CancellationToken cancellationToken = default)
     {
         await using var connection = await _database.OpenConnectionAsync(cancellationToken);
-        var normalized = Path.GetFullPath(filePath);
         return await ReadSingleAsync(
             connection,
             "WHERE FilePath = $path COLLATE NOCASE",
-            ("$path", normalized),
+            ("$path", ToStoredPath(filePath)),
             cancellationToken);
     }
 
@@ -333,7 +335,7 @@ public sealed class BookRepository
                 WHERE FilePath = $filePath COLLATE NOCASE AND Id <> $id
             );
             """;
-        command.Parameters.AddWithValue("$filePath", filePath);
+        command.Parameters.AddWithValue("$filePath", ToStoredPath(filePath));
         command.Parameters.AddWithValue("$id", excludingBookId);
         return Convert.ToInt32(await command.ExecuteScalarAsync(cancellationToken), CultureInfo.InvariantCulture) != 0;
     }
@@ -346,7 +348,7 @@ public sealed class BookRepository
         return Convert.ToInt32(await command.ExecuteScalarAsync(cancellationToken), CultureInfo.InvariantCulture);
     }
 
-    private static async Task<Book?> ReadSingleAsync(
+    private async Task<Book?> ReadSingleAsync(
         SqliteConnection connection,
         string whereClause,
         (string Name, object Value) parameter,
@@ -388,10 +390,10 @@ public sealed class BookRepository
         }
     }
 
-    private static Book ReadBook(SqliteDataReader reader) => new()
+    private Book ReadBook(SqliteDataReader reader) => new()
     {
         Id = reader.GetInt64(0),
-        FilePath = reader.GetString(1),
+        FilePath = ResolveStoredPath(reader.GetString(1)),
         SourcePath = reader.IsDBNull(2) ? null : reader.GetString(2),
         Format = BookFormatExtensions.ParseStorageValue(reader.GetString(3)),
         Title = reader.GetString(4),
@@ -411,9 +413,9 @@ public sealed class BookRepository
         Location = reader.IsDBNull(18) ? null : ReadingLocationCodec.FromJson(reader.GetString(18)),
     };
 
-    private static void AddBookParameters(SqliteCommand command, Book book)
+    private void AddBookParameters(SqliteCommand command, Book book)
     {
-        command.Parameters.AddWithValue("$path", Path.GetFullPath(book.FilePath));
+        command.Parameters.AddWithValue("$path", ToStoredPath(book.FilePath));
         command.Parameters.AddWithValue("$sourcePath", (object?)book.SourcePath ?? DBNull.Value);
         command.Parameters.AddWithValue("$format", book.Format.ToStorageValue());
         command.Parameters.AddWithValue("$title", book.Title);
@@ -431,6 +433,42 @@ public sealed class BookRepository
         command.Parameters.AddWithValue("$status", book.Status.ToStorageValue());
         command.Parameters.AddWithValue("$progress", ReadingLocationCodec.NormalizeProgress(book.Progress));
         command.Parameters.AddWithValue("$location", (object?)ReadingLocationCodec.ToJson(book.Location) ?? DBNull.Value);
+    }
+
+    private string ResolveStoredPath(string storedPath)
+    {
+        if (string.IsNullOrWhiteSpace(storedPath))
+        {
+            return storedPath;
+        }
+
+        if (Path.IsPathRooted(storedPath))
+        {
+            return Path.GetFullPath(storedPath);
+        }
+
+        return Path.GetFullPath(Path.Combine(
+            _dataRoot,
+            storedPath.Replace('/', Path.DirectorySeparatorChar)));
+    }
+
+    private string ToStoredPath(string filePath)
+    {
+        if (!Path.IsPathRooted(filePath))
+        {
+            return filePath.Replace('\\', '/');
+        }
+
+        var fullPath = Path.GetFullPath(filePath);
+        var prefix = _dataRoot.EndsWith(Path.DirectorySeparatorChar)
+            ? _dataRoot
+            : _dataRoot + Path.DirectorySeparatorChar;
+        if (!fullPath.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+        {
+            return fullPath;
+        }
+
+        return Path.GetRelativePath(_dataRoot, fullPath).Replace('\\', '/');
     }
 
     private static string FormatDate(DateTimeOffset value) =>

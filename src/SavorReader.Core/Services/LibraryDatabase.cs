@@ -4,7 +4,7 @@ namespace SavorReader.Core.Services;
 
 public sealed class LibraryDatabase
 {
-    public const int SchemaVersion = 2;
+    public const int SchemaVersion = 3;
 
     public LibraryDatabase(string databasePath)
     {
@@ -115,28 +115,100 @@ public sealed class LibraryDatabase
                 CREATE INDEX IF NOT EXISTS IX_Annotations_BookId
                     ON Annotations(BookId);
 
-                PRAGMA user_version=2;
+                PRAGMA user_version=3;
                 """, cancellationToken);
 
             await transaction.CommitAsync(cancellationToken);
         }
-        else if (version == 1)
+        else
         {
-            await using var transaction = await connection.BeginTransactionAsync(cancellationToken);
-            await ExecuteAsync(connection, """
-                ALTER TABLE Books ADD COLUMN SourcePath TEXT NULL;
-                UPDATE Books SET SourcePath = FilePath WHERE SourcePath IS NULL;
-                CREATE INDEX IF NOT EXISTS IX_Books_SourcePath
-                    ON Books(SourcePath COLLATE NOCASE);
-                CREATE INDEX IF NOT EXISTS IX_Books_ContentHash
-                    ON Books(ContentHash);
-                PRAGMA user_version=2;
-                """, cancellationToken);
+            if (version == 1)
+            {
+                await using var transaction = await connection.BeginTransactionAsync(cancellationToken);
+                await ExecuteAsync(connection, """
+                    ALTER TABLE Books ADD COLUMN SourcePath TEXT NULL;
+                    UPDATE Books SET SourcePath = FilePath WHERE SourcePath IS NULL;
+                    CREATE INDEX IF NOT EXISTS IX_Books_SourcePath
+                        ON Books(SourcePath COLLATE NOCASE);
+                    CREATE INDEX IF NOT EXISTS IX_Books_ContentHash
+                        ON Books(ContentHash);
+                    PRAGMA user_version=2;
+                    """, cancellationToken);
 
-            await transaction.CommitAsync(cancellationToken);
+                await transaction.CommitAsync(cancellationToken);
+                version = 2;
+            }
+
+            if (version == 2)
+            {
+                await NormalizeManagedPathsAsync(connection, cancellationToken);
+            }
         }
 
         await ExecuteAsync(connection, "PRAGMA optimize;", cancellationToken);
+    }
+
+    private async Task NormalizeManagedPathsAsync(
+        SqliteConnection connection,
+        CancellationToken cancellationToken)
+    {
+        var dataRoot = Path.GetDirectoryName(DatabasePath)
+            ?? throw new InvalidOperationException("数据库路径缺少数据目录。");
+        var updates = new List<(long Id, string RelativePath)>();
+
+        using (var select = connection.CreateCommand())
+        {
+            select.CommandText = "SELECT Id, FilePath FROM Books;";
+            using var reader = await select.ExecuteReaderAsync(cancellationToken);
+            while (await reader.ReadAsync(cancellationToken))
+            {
+                var stored = reader.GetString(1);
+                var normalized = ToRelativeDataPath(stored, dataRoot);
+                if (!string.Equals(stored, normalized, StringComparison.Ordinal))
+                {
+                    updates.Add((reader.GetInt64(0), normalized));
+                }
+            }
+        }
+
+        await using var transaction = await connection.BeginTransactionAsync(cancellationToken);
+        foreach (var (id, relativePath) in updates)
+        {
+            using var update = connection.CreateCommand();
+            update.Transaction = (SqliteTransaction)transaction;
+            update.CommandText = "UPDATE Books SET FilePath = $path WHERE Id = $id;";
+            update.Parameters.AddWithValue("$path", relativePath);
+            update.Parameters.AddWithValue("$id", id);
+            await update.ExecuteNonQueryAsync(cancellationToken);
+        }
+
+        using (var versionCommand = connection.CreateCommand())
+        {
+            versionCommand.Transaction = (SqliteTransaction)transaction;
+            versionCommand.CommandText = "PRAGMA user_version=3;";
+            await versionCommand.ExecuteNonQueryAsync(cancellationToken);
+        }
+
+        await transaction.CommitAsync(cancellationToken);
+    }
+
+    private static string ToRelativeDataPath(string storedPath, string dataRoot)
+    {
+        if (!Path.IsPathRooted(storedPath))
+        {
+            return storedPath.Replace('\\', '/');
+        }
+
+        var fullPath = Path.GetFullPath(storedPath);
+        var prefix = dataRoot.EndsWith(Path.DirectorySeparatorChar)
+            ? dataRoot
+            : dataRoot + Path.DirectorySeparatorChar;
+        if (!fullPath.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+        {
+            return storedPath;
+        }
+
+        return Path.GetRelativePath(dataRoot, fullPath).Replace('\\', '/');
     }
 
     public async Task<SqliteConnection> OpenConnectionAsync(CancellationToken cancellationToken = default)

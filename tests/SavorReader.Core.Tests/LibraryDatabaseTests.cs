@@ -99,6 +99,96 @@ public sealed class LibraryDatabaseTests
     }
 
     [Fact]
+    public async Task BookRepository_StoresManagedPathRelativeToDataRoot()
+    {
+        using var temp = new TempDirectory();
+        var dataRoot = Path.Combine(temp.Path, "data");
+        var database = new LibraryDatabase(Path.Combine(dataRoot, "library.db"));
+        await database.InitializeAsync();
+        var repository = new BookRepository(database);
+        var managedPath = Path.Combine(dataRoot, "Books", "name.epub");
+        Directory.CreateDirectory(Path.GetDirectoryName(managedPath)!);
+        await File.WriteAllTextAsync(managedPath, "fixture");
+
+        var book = new Book
+        {
+            FilePath = managedPath,
+            Format = BookFormat.Epub,
+            Title = "相对路径测试",
+            FileSize = 7,
+            FileModifiedUtc = DateTimeOffset.UtcNow,
+        };
+        await repository.InsertAsync(book);
+
+        string storedPath;
+        await using (var connection = await database.OpenConnectionAsync())
+        using (var command = connection.CreateCommand())
+        {
+            command.CommandText = "SELECT FilePath FROM Books WHERE Id = $id;";
+            command.Parameters.AddWithValue("$id", book.Id);
+            storedPath = (string)(await command.ExecuteScalarAsync())!;
+        }
+
+        Assert.Equal("Books/name.epub", storedPath);
+
+        Microsoft.Data.Sqlite.SqliteConnection.ClearAllPools();
+        var movedRoot = Path.Combine(temp.Path, "moved");
+        Directory.Move(dataRoot, movedRoot);
+        var movedDatabase = new LibraryDatabase(Path.Combine(movedRoot, "library.db"));
+        await movedDatabase.InitializeAsync();
+        var movedRepository = new BookRepository(movedDatabase);
+        var loaded = await movedRepository.GetByIdAsync(book.Id);
+
+        Assert.NotNull(loaded);
+        Assert.Equal(Path.Combine(movedRoot, "Books", "name.epub"), loaded.FilePath);
+    }
+
+    [Fact]
+    public async Task Initialize_NormalizesV2AbsoluteManagedPaths()
+    {
+        using var temp = new TempDirectory();
+        var dataRoot = Path.Combine(temp.Path, "data");
+        var database = new LibraryDatabase(Path.Combine(dataRoot, "library.db"));
+        await database.InitializeAsync();
+        var repository = new BookRepository(database);
+        var managedPath = Path.Combine(dataRoot, "Books", "v2.epub");
+        Directory.CreateDirectory(Path.GetDirectoryName(managedPath)!);
+        await File.WriteAllTextAsync(managedPath, "v2");
+
+        var book = new Book
+        {
+            FilePath = managedPath,
+            Format = BookFormat.Epub,
+            Title = "v2 迁移测试",
+            FileSize = 2,
+            FileModifiedUtc = DateTimeOffset.UtcNow,
+        };
+        await repository.InsertAsync(book);
+
+        await using (var connection = await database.OpenConnectionAsync())
+        using (var update = connection.CreateCommand())
+        {
+            update.CommandText = """
+                UPDATE Books SET FilePath = $path WHERE Id = $id;
+                PRAGMA user_version=2;
+                """;
+            update.Parameters.AddWithValue("$path", managedPath);
+            update.Parameters.AddWithValue("$id", book.Id);
+            await update.ExecuteNonQueryAsync();
+        }
+
+        await database.InitializeAsync();
+
+        await using (var connection = await database.OpenConnectionAsync())
+        using (var command = connection.CreateCommand())
+        {
+            command.CommandText = "SELECT FilePath FROM Books WHERE Id = $id;";
+            command.Parameters.AddWithValue("$id", book.Id);
+            Assert.Equal("Books/v2.epub", (string?)await command.ExecuteScalarAsync());
+        }
+    }
+
+    [Fact]
     public async Task ReadingProgressService_MarksFinishedAtTheEnd()
     {
         using var temp = new TempDirectory();
