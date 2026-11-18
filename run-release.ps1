@@ -11,7 +11,7 @@ $root = Split-Path -Parent $PSCommandPath
 $project = Join-Path $root 'src\SavorReader\SavorReader.csproj'
 $tfm = 'net11.0-windows10.0.26100.0'
 $rid = 'win-x64'
-$output = Join-Path $root "src\SavorReader\bin\Release\$tfm\$rid"
+$output = Join-Path $root "src\SavorReader\bin\x64\Release\$tfm\$rid"
 $destination = Join-Path $env:USERPROFILE 'App\SavorReader'
 $running = Get-Process -Name SavorReader -ErrorAction SilentlyContinue
 
@@ -20,7 +20,7 @@ if ($running) {
 }
 
 if (-not $NoBuild) {
-    & dotnet build $project -c Release --nologo --no-incremental
+    & dotnet build $project -c Release -p:Platform=x64 --nologo --no-incremental
     if ($LASTEXITCODE -ne 0) {
         throw "Release 构建失败，退出码 $LASTEXITCODE。"
     }
@@ -61,7 +61,7 @@ if (-not $NoStartMenuShortcut) {
         $shortcut.TargetPath = $exe
         $shortcut.WorkingDirectory = $destination
         $shortcut.IconLocation = "$exe,0"
-        $shortcut.Description = 'SavorReader 本地 EPUB/PDF 书库与阅读器'
+        $shortcut.Description = 'SavorReader local EPUB/PDF library'
         $shortcut.Save()
         [void][Runtime.InteropServices.Marshal]::ReleaseComObject($shortcut)
         [void][Runtime.InteropServices.Marshal]::ReleaseComObject($wshShell)

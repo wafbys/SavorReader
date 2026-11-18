@@ -1,5 +1,17 @@
 # Changelog
 
+## 未发布
+
+### Changed
+
+- Windows App SDK `2.6.5` → `2.7.0`（2.x 服务线补丁，无破坏性变更）。
+- 窗口标题与关于页统一显示 `v1.1.0 · Release · 825f7ec · 2026-11-18 09:30`（版本 · 配置 · 短哈希 · 构建时间）；构建时间由 `AssemblyMetadata` 注入。
+- `run-release.ps1` 与 IcedPicViewer 对齐：显式 `-p:Platform=x64`，从 `bin\x64\Release` 部署，快捷方式描述改用 ASCII 避免 ACP 1252 下中文变问号。
+
+### Verified
+
+- Release 构建 0/0；Core 测试 21 全绿；部署版启动成功，标题为 `SavorReader v1.1.0 · Release · 825f7ec · 2026-11-18 09:54`；`Data` 保留在 exe 旁。
+
 ## 1.1.0 - 2026-11-16
 
 ### Added

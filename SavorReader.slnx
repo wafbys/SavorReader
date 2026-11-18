@@ -1,9 +1,21 @@
 <Solution>
+  <Configurations>
+    <Platform Name="x64" />
+    <Platform Name="Any CPU" />
+  </Configurations>
   <Folder Name="/src/">
-    <Project Path="src/SavorReader.Core/SavorReader.Core.csproj" />
-    <Project Path="src/SavorReader/SavorReader.csproj" />
+    <Project Path="src/SavorReader.Core/SavorReader.Core.csproj">
+      <Platform Solution="*|x64" Project="Any CPU" />
+      <Platform Solution="*|Any CPU" Project="Any CPU" />
+    </Project>
+    <Project Path="src/SavorReader/SavorReader.csproj">
+      <Platform Solution="*|x64" Project="x64" />
+    </Project>
   </Folder>
   <Folder Name="/tests/">
-    <Project Path="tests/SavorReader.Core.Tests/SavorReader.Core.Tests.csproj" />
+    <Project Path="tests/SavorReader.Core.Tests/SavorReader.Core.Tests.csproj">
+      <Platform Solution="*|x64" Project="Any CPU" />
+      <Platform Solution="*|Any CPU" Project="Any CPU" />
+    </Project>
   </Folder>
 </Solution>

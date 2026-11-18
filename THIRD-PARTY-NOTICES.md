@@ -6,7 +6,7 @@ SavorReader 的代码依赖全部为开源或免费运行时组件；没有引�
 
 | Component | Version | License | Use |
 |---|---|---|---|
-| Microsoft Windows App SDK / WinUI 3 | 2.6.5 | MIT (source) | WinUI 3 application framework |
+| Microsoft Windows App SDK / WinUI 3 | 2.7.0 | MIT (source) | WinUI 3 application framework |
 | Microsoft WebView2 | 1.0.3719.77 package; system runtime | Microsoft WebView2 terms | EPUB rendering and built-in PDF viewer |
 | .NET runtime | 11.0 | MIT | Runtime |
 | Microsoft.Data.Sqlite | 11.0.0 | MIT | SQLite persistence |

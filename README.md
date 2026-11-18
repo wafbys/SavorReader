@@ -1,10 +1,10 @@
 # SavorReader
 
-本地个人使用的 EPUB/PDF 书库与阅读器。WinUI 3 + .NET 11 + C# 15，纯本地运行，不打包、不发布、不生成 MSIX。
+本地个人使用的 EPUB/PDF 书库与阅读器。WinUI 3 + .NET 11 + C# 15，纯本地运行，不打包 MSIX、不对外发布；本地 Release 部署到 `%USERPROFILE%\App\SavorReader`。
 
 ## 技术栈
 
-- **应用项目**：`net11.0-windows10.0.26100.0`，WinUI 3（Windows App SDK 2.6.5），unpackaged，`WindowsPackageType=None`
+- **应用项目**：`net11.0-windows10.0.26100.0`，WinUI 3（Windows App SDK 2.7.0），unpackaged，`WindowsPackageType=None`
 - **核心项目**：`net11.0`，C# 15
 - **UI**：WinUI 3 / XAML；自定义标题栏 + Mica
 - **EPUB**：解压到本地缓存，WebView2 虚拟主机，spine 章节 iframe 连续滚动
@@ -16,7 +16,7 @@
 
 - Windows 11 x64（本机为 Windows 11 26300）
 - .NET SDK 11.0.100（`global.json` 已固定）
-- Windows App Runtime 2.6.5（本机已安装）
+- Windows App Runtime 2.7.0（本机已安装）
 - WebView2 Runtime（本机已安装 157.x）
 
 项目不生成 MSIX，也不需要 Visual Studio；全部操作通过命令行完成。
@@ -29,14 +29,14 @@
 - 修复：升 patch，例如 `1.1.0` → `1.1.1`
 - 不兼容改动：升 major
 
-版本会显示在窗口标题和关于页；每次版本变更同步更新 `CHANGELOG.md`，再运行 `run-release.ps1`。
+版本、配置、Git 短哈希和构建时间会显示在窗口标题和关于页；每次版本变更同步更新 `CHANGELOG.md`，再运行 `run-release.ps1`。
 
 ## 构建、测试、运行
 
 ```powershell
-dotnet build .\SavorReader.slnx
-dotnet test .\tests\SavorReader.Core.Tests\SavorReader.Core.Tests.csproj
-dotnet run --project .\src\SavorReader\SavorReader.csproj
+dotnet build .\SavorReader.slnx -p:Platform=x64
+dotnet test .\tests\SavorReader.Core.Tests\SavorReader.Core.Tests.csproj -p:Platform=x64
+dotnet run --project .\src\SavorReader\SavorReader.csproj -p:Platform=x64
 ```
 
 Release 构建并部署到固定执行目录：
@@ -45,15 +45,15 @@ Release 构建并部署到固定执行目录：
 .\run-release.ps1
 ```
 
-窗口标题会显示版本、`Debug`/`Release` 和 Git 短哈希，例如：
+窗口标题会显示版本、`Debug`/`Release`、Git 短哈希和构建时间，例如：
 
 ```text
-SavorReader v1.1.0 · Release · 3a83ebb
+SavorReader v1.1.0 · Release · 3a83ebb · 2026-11-18 09:30
 ```
 
 脚本会：
 
-1. `dotnet build -c Release --no-incremental`（强制重建，确保短哈希刷新）
+1. `dotnet build -c Release -p:Platform=x64 --no-incremental`（强制重建，确保短哈希刷新）
 2. 把 Release 输出复制到 `C:\Users\YF\App\SavorReader`
 3. 保留该目录下已有的 `Data`
 4. 在 `%APPDATA%\Microsoft\Windows\Start Menu\Programs\SavorReader.lnk` 创建/更新开始菜单快捷方式
@@ -89,7 +89,7 @@ SavorReader v1.1.0 · Release · 3a83ebb
 ```
 
 - Release 运行：`C:\Users\YF\App\SavorReader\Data`
-- `dotnet run`：`src\SavorReader\bin\Debug\net11.0-windows10.0.26100.0\win-x64\Data`
+- `dotnet run`：`src\SavorReader\bin\x64\Debug\net11.0-windows10.0.26100.0\win-x64\Data`
 - 测试/诊断可用环境变量 `SAVORREADER_DATA_DIR` 覆盖数据根目录。
 
 导入时会把书籍**复制到 `Data\Books`**，书库指向副本而不是原路径。文件名保持原始文件名；同名文件自动追加 `(2)`、`(3)` 后缀，不使用 UUID 或哈希作为文件名。原文件保留；移走原文件不会影响阅读。相同源路径或相同内容重复导入会跳过。旧版本已经导入的外部书籍会在下一次启动时自动复制到 `Data\Books`，已有的哈希名副本也会改回原文件名。

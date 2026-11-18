@@ -36,7 +36,21 @@
   <ItemGroup>
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
     <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.26100.7705" />
-    <PackageReference Include="Microsoft.WindowsAppSDK" Version="2.6.5" />
+    <PackageReference Include="Microsoft.WindowsAppSDK" Version="2.7.0" />
+  </ItemGroup>
+
+  <!--
+    Build metadata read by BuildInfo.cs at runtime. BuildDateTime is the
+    build start time (local); WindowsAppSdkVersion is the resolved
+    PackageReference version, so the About page can never disagree with
+    the actual dependency. GenerateAssemblyInfo emits these as
+    [assembly: AssemblyMetadata].
+  -->
+  <ItemGroup>
+    <AssemblyMetadata Include="BuildDateTime"
+                      Value="$([System.DateTime]::Now.ToString('yyyy-MM-dd HH:mm'))" />
+    <AssemblyMetadata Include="WindowsAppSdkVersion"
+                      Value="@(PackageReference->WithMetadataValue('Identity', 'Microsoft.WindowsAppSDK')->'%(Version)')" />
   </ItemGroup>
 
   <ItemGroup>

@@ -3,6 +3,5 @@
     <LangVersion>15.0</LangVersion>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
-    <Deterministic>true</Deterministic>
   </PropertyGroup>
 </Project>
